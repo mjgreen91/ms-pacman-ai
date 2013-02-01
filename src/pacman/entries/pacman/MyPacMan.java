@@ -1,5 +1,7 @@
 package pacman.entries.pacman;
 
+import java.util.Random;
+
 import pacman.controllers.Controller;
 import pacman.game.Constants.MOVE;
 import pacman.game.Game;
@@ -15,8 +17,21 @@ public class MyPacMan extends Controller<MOVE>
 	
 	public MOVE getMove(Game game, long timeDue) 
 	{
-		//Place your game logic here to play the game as Ms Pac-Man
+		//A very simple intial base. The controller determines possible moves
+		//and randomly chooses one as it's next move. Going back in the direction
+		//it came is a valid move.
+		int currentNode = game.getPacmanCurrentNodeIndex();
 		
+		if(game.isJunction(currentNode)){
+			MOVE[] pos = game.getPossibleMoves(currentNode);
+			Random r = new Random();
+			int stop = r.nextInt(pos.length);
+			myMove = pos[stop];
+			}
+		
+		else{
+			myMove = game.getPacmanLastMoveMade();
+		}
 		return myMove;
 	}
 }
