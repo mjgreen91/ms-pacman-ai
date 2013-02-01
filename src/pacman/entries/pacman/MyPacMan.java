@@ -19,19 +19,15 @@ public class MyPacMan extends Controller<MOVE>
 	{
 		//A very simple intial base. The controller determines possible moves
 		//and randomly chooses one as it's next move. Going back in the direction
-		//it came is a valid move.
+		//it came is not a valid move.
+		MOVE lastMove = game.getPacmanLastMoveMade();
 		int currentNode = game.getPacmanCurrentNodeIndex();
 		
-		if(game.isJunction(currentNode)){
-			MOVE[] pos = game.getPossibleMoves(currentNode);
-			Random r = new Random();
-			int stop = r.nextInt(pos.length);
-			myMove = pos[stop];
-			}
-		
-		else{
-			myMove = game.getPacmanLastMoveMade();
-		}
+		MOVE[] pos = game.getPossibleMoves(currentNode, lastMove);
+		Random r = new Random();
+		int stop = r.nextInt(pos.length);
+		myMove = pos[stop];
+			
 		return myMove;
 	}
 }
