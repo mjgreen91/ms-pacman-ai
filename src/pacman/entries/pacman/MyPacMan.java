@@ -21,8 +21,9 @@ public class MyPacMan extends Controller<MOVE>
 	public MOVE getMove(Game game, long timeDue) 
 	{
 		
-		//Simple AI which randomly decides which direction to go every tick.
-		//If a ghost gets too close it will try to move away from it.
+		//Simple AI which randomly decides which direction to go every tick, unless
+		//a ghost gets too close in which case it will try to move away from or towards it
+		//depending on it's current edible state.
 		MOVE lastMove = game.getPacmanLastMoveMade();
 		int currentNode = game.getPacmanCurrentNodeIndex();
 		MOVE[] posMoves = game.getPossibleMoves(currentNode, lastMove);
@@ -45,10 +46,16 @@ public class MyPacMan extends Controller<MOVE>
 			}
 		}
 		
-		//If the closest ghost is too close then move away from it.
+		//If the closest ghost is too close to Ms Pac-man:
+		//First check to see if the ghost can be eaten,
+		//If it can then try to eat it otherwise run away from it
 		//Otherwise pick a random move to make.
-		if(closest <= 10 && closest != -1){
-			myMove = game.getNextMoveAwayFromTarget(currentNode, ghostIndex, DM.PATH);
+		if(closest <= 10 && closest != -1 && game.isGhostEdible(ghosts[ghostIndex]) == false){
+			myMove = game.getNextMoveAwayFromTarget(currentNode, game.getGhostCurrentNodeIndex(ghosts[ghostIndex]), DM.PATH);
+		}
+		
+		else if(closest <= 10 && closest != -1 && game.isGhostEdible(ghosts[ghostIndex]) == true){
+			myMove = game.getNextMoveTowardsTarget(currentNode, game.getGhostCurrentNodeIndex(ghosts[ghostIndex]), DM.PATH);
 		}
 		
 		else{
