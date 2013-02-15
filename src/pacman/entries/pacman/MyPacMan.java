@@ -40,7 +40,7 @@ public class MyPacMan extends Controller<MOVE>
 			ghosts[2] = GHOST.INKY;
 			ghosts[3] = GHOST.SUE;
 		boolean ghostAlert = false;
-		int projectedScore = bestScore;
+		
 		//Evaluates all current possible moves and scores them.
 			//Highest scoring becomes next move to make.
 			for(int i = 0; i < posMoves.length; i++){
