@@ -30,68 +30,66 @@ public class MyPacMan extends Controller<MOVE>
 		
 		MOVE lastMove = game.getPacmanLastMoveMade();
 		int currentNode = game.getPacmanCurrentNodeIndex();
-		int currentBest = 0;
-		int[] neighbours = game.getNeighbouringNodes(currentNode);
-		int check = 0;
-		
-		while(check != 40){			
-		
-			check ++;
+		int currentBest = currentNode;
+		int bestScore = game.getScore();
+		int posScore = 1000;
+		MOVE[] posMoves = game.getPossibleMoves(currentNode, lastMove);
+		GHOST[] ghosts = new GHOST[4];
+			ghosts[0] = GHOST.BLINKY;
+			ghosts[1] = GHOST.PINKY;
+			ghosts[2] = GHOST.INKY;
+			ghosts[3] = GHOST.SUE;
+		boolean ghostAlert = false;
 			
-			//Find the best node out of those.
-			currentBest = evaluateNeighbours(game, neighbours);
+			//Evaluates all current possible moves and scores them.
+			//Highest scoring becomes next move to make.
+			for(int i = 0; i < posMoves.length; i++){
+				int temp = game.getNeighbour(currentNode, posMoves[i]);
+				int score = 0;
+				int pill = game.getPillIndex(temp);
+				int pPill = game.getPowerPillIndex(temp);
+				
+				//Determines how close the ghosts are to the node being evaluated.
+				for(int j = 0; j < ghosts.length; j++){
+					int gNode = game.getGhostCurrentNodeIndex(ghosts[j]);
+					int dist = game.getManhattanDistance(temp, gNode);
+					
+					if(dist < 5 && game.isGhostEdible(ghosts[j]) == false){
+						ghostAlert = true;
+						currentBest = gNode;
+					}
+					else if(dist < 5 && game.isGhostEdible(ghosts[j]) == true){
+						score = score + game.getGhostCurrentEdibleScore();
+					}
+				}
+				
+				if(pill != -1 && game.isPillStillAvailable(pill)){
+					score = score + 10;
+				}
+				
+				//Want clause in here so it doesn't chase powerpills if ghosts are already edible
+				if(pPill != -1 && game.isPowerPillStillAvailable(pPill)){
+					score = score + 50;
+				}
+				
+				if(ghostAlert == true){
+					myMove = game.getNextMoveAwayFromTarget(currentNode, currentBest, DM.MANHATTAN);
+				}
+				
+				else{
+					if(score > posScore){
+					posScore = score;
+					currentBest = temp;
+					}
+					myMove = game.getNextMoveTowardsTarget(currentNode, currentBest, lastMove, DM.MANHATTAN);
+				}
+			}
+			currentBest = 0;
+			posScore = 0;
 			
-			//Make the next move to be towards the best found node
-			myMove = game.getNextMoveTowardsTarget(currentNode, currentBest, lastMove, DM.PATH);
 			
-			//get the neighbours of the best node.
-			neighbours = game.getNeighbouringNodes(currentBest);
-			
-		}
-		
 		return myMove;
 	}
+
 	
-	public int evaluateNeighbours(Game game, int[] neighbours){
-		int bestFound = 0;
-		int bestScore = 0;
-		GHOST[] ghosts = new GHOST[4];
-		ghosts[0] = GHOST.BLINKY;
-		ghosts[1] = GHOST.PINKY;
-		ghosts[2] = GHOST.INKY;
-		ghosts[3] = GHOST.SUE;
-		
-		for(int i = 0; i < neighbours.length; i++){
-			int temp = neighbours[i];
-			int tempScore = 0;
-			
-			for(int j = 0; j < ghosts.length; j++){
-				int ghost = game.getGhostCurrentNodeIndex(ghosts[j]);
-				
-					if(ghost == temp && game.isGhostEdible(ghosts[j]) != true){
-						tempScore = tempScore - 1000;
-				}
-					else if(ghost == temp && game.isGhostEdible(ghosts[j]) == true){
-						tempScore = tempScore + game.getGhostCurrentEdibleScore();
-					}
-			}
-			
-			if(game.isPillStillAvailable(temp) == true){
-				tempScore = tempScore + 10;
-			}
-			
-			if(game.isPowerPillStillAvailable(temp) == true){
-				tempScore = tempScore + 50;
-			}
-			
-			if(tempScore > bestScore){
-				bestScore = tempScore;
-				bestFound = temp;
-			}
-		}
-		System.out.println(bestFound);
-		System.out.println(bestScore);
-		return bestFound;
-	}
-	
-}
+} 
