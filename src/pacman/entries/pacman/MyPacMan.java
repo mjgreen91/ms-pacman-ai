@@ -40,8 +40,8 @@ public class MyPacMan extends Controller<MOVE>
 			ghosts[2] = GHOST.INKY;
 			ghosts[3] = GHOST.SUE;
 		boolean ghostAlert = false;
-			
-			//Evaluates all current possible moves and scores them.
+		int projectedScore = bestScore;
+		//Evaluates all current possible moves and scores them.
 			//Highest scoring becomes next move to make.
 			for(int i = 0; i < posMoves.length; i++){
 				int temp = game.getNeighbour(currentNode, posMoves[i]);
@@ -84,10 +84,6 @@ public class MyPacMan extends Controller<MOVE>
 					myMove = game.getNextMoveTowardsTarget(currentNode, currentBest, lastMove, DM.MANHATTAN);
 				}
 			}
-			currentBest = 0;
-			posScore = 0;
-			
-			
 		return myMove;
 	}
 
