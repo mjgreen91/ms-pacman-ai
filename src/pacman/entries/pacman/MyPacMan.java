@@ -29,27 +29,68 @@ public class MyPacMan extends Controller<MOVE>
 		 */
 		
 		MOVE lastMove = game.getPacmanLastMoveMade();
-		int currentNode = game.getPacmanCurrentNodeIndex();
-		int currentBest = currentNode;
+		int curNode = game.getPacmanCurrentNodeIndex();
+		int curBest = curNode;
 		int bestScore = game.getScore();
-		int posScore = 1000;
-		MOVE[] posMoves = game.getPossibleMoves(currentNode, lastMove);
+		MOVE[] posMoves = game.getPossibleMoves(curNode, lastMove);
 		GHOST[] ghosts = new GHOST[4];
 			ghosts[0] = GHOST.BLINKY;
 			ghosts[1] = GHOST.PINKY;
 			ghosts[2] = GHOST.INKY;
 			ghosts[3] = GHOST.SUE;
 		boolean ghostAlert = false;
+		boolean atJunction = false;
 		
-		//Evaluates all current possible moves and scores them.
-			//Highest scoring becomes next move to make.
-			for(int i = 0; i < posMoves.length; i++){
-				int temp = game.getNeighbour(currentNode, posMoves[i]);
-				int score = 0;
-				int pill = game.getPillIndex(temp);
-				int pPill = game.getPowerPillIndex(temp);
-				
-				//Determines how close the ghosts are to the node being evaluated.
+		
+		for(int i = 0; i < posMoves.length ;i ++){
+			int score = 0;
+			int searchNode = game.getNeighbour(curNode, posMoves[i]);
+			
+			while(atJunction != true){
+				int pill = game.getPillIndex(searchNode);
+				int pPill = game.getPowerPillIndex(searchNode);
+				MOVE[] cornerCheck = game.getPossibleMoves(searchNode);
+
+				//Are we at a junction? 
+				//If yes cash up & compare scores
+				if(game.isJunction(searchNode) == true){
+					if(score > bestScore){
+						bestScore = score;
+						curBest = searchNode;
+					}
+					atJunction = true;
+				}
+
+				//Are we at a right-angle corner?
+				else if(cornerCheck.length != 0){
+
+					if(pill != -1 && game.isPillStillAvailable(pill)){
+						score = score + 10;
+					}
+
+					else if(pPill != -1 && game.isPowerPillStillAvailable(pPill)){
+						score = score + 50;
+					}
+
+					searchNode = game.getNeighbour(searchNode, cornerCheck[0]);
+				}
+
+				else{
+					if(pill != -1 && game.isPillStillAvailable(pill)){
+						score = score + 10;
+					}
+
+					else if(pPill != -1 && game.isPowerPillStillAvailable(pPill)){
+						score = score + 50;
+					}
+
+					searchNode = game.getNeighbour(searchNode, lastMove);
+				}
+			}
+		myMove = game.getNextMoveTowardsTarget(curNode, curBest, DM.PATH);
+		}
+		
+/*				//Determines how close the ghosts are to the node being evaluated.
 				for(int j = 0; j < ghosts.length; j++){
 					int gNode = game.getGhostCurrentNodeIndex(ghosts[j]);
 					int dist = game.getManhattanDistance(temp, gNode);
@@ -57,33 +98,7 @@ public class MyPacMan extends Controller<MOVE>
 					if(dist < 5 && game.isGhostEdible(ghosts[j]) == false){
 						ghostAlert = true;
 						currentBest = gNode;
-					}
-					else if(dist < 5 && game.isGhostEdible(ghosts[j]) == true){
-						score = score + game.getGhostCurrentEdibleScore();
-					}
-				}
-				
-				if(pill != -1 && game.isPillStillAvailable(pill)){
-					score = score + 10;
-				}
-				
-				//Want clause in here so it doesn't chase powerpills if ghosts are already edible
-				if(pPill != -1 && game.isPowerPillStillAvailable(pPill)){
-					score = score + 50;
-				}
-				
-				if(ghostAlert == true){
-					myMove = game.getNextMoveAwayFromTarget(currentNode, currentBest, DM.MANHATTAN);
-				}
-				
-				else{
-					if(score > posScore){
-					posScore = score;
-					currentBest = temp;
-					}
-					myMove = game.getNextMoveTowardsTarget(currentNode, currentBest, lastMove, DM.MANHATTAN);
-				}
-			}
+					} */
 		return myMove;
 	}
 
