@@ -16,6 +16,7 @@ import pacman.game.Game;
 public class MyPacMan extends Controller<MOVE>
 {
 	private MOVE myMove=MOVE.NEUTRAL;
+	private int sectionScore = 0;
 	
 	public MOVE getMove(Game game, long timeDue) 
 	{
@@ -29,85 +30,107 @@ public class MyPacMan extends Controller<MOVE>
 		 */
 		
 		MOVE lastMove = game.getPacmanLastMoveMade();
-		int currentNode = game.getPacmanCurrentNodeIndex();
-		int currentBest = currentNode;
-		int bestScore = game.getScore();
-		int projectedScore = bestScore;
-		MOVE[] posMoves = game.getPossibleMoves(currentNode, lastMove);
+		int curNode = game.getPacmanCurrentNodeIndex();
+		int bestJ = 0;
+		int bestS = 0;
+		MOVE[] moves = game.getPossibleMoves(curNode, lastMove);
 		GHOST[] ghosts = new GHOST[4];
 			ghosts[0] = GHOST.BLINKY;
 			ghosts[1] = GHOST.PINKY;
 			ghosts[2] = GHOST.INKY;
 			ghosts[3] = GHOST.SUE;
-		boolean tooClose = false;
-		GHOST closestG = null;
-		int check = 0;
+		boolean ghostAlert = false;
+		boolean atJunction = false;
 		
-		while(check != 40){			
-		//This is in place of a timer just now
-			check ++;
+		for(int i = 0; i < moves.length ;i ++){
+			int searchNode = game.getNeighbour(curNode, moves[i]);
+			int junc = findNextJunction(game, searchNode, lastMove);
 			
-			//Search through all possible moves.
-			for(int i = 0; i < posMoves.length; i++){
-				int temp = game.getNeighbour(currentNode, posMoves[i]);;
-				int tempScore = 0;
-			
-			//Find the best move out of those.
-				
-				//Searches for ghosts in the current node
-				for(int j = 0; j < ghosts.length; j++){
-					int ghost = game.getGhostCurrentNodeIndex(ghosts[j]);
-					
-						if(ghost == temp && game.isGhostEdible(ghosts[j]) != true){
-							tempScore = tempScore - 1000;
-					}
-						else if(ghost == temp && game.isGhostEdible(ghosts[j]) == true){
-							tempScore = tempScore + game.getGhostCurrentEdibleScore();
-						}
-						
-						else if(game.getDistance(currentNode, ghost, DM.PATH) < 10){
-							tooClose = true;
-							closestG = ghosts[j];
-						}
-				}
-				//checks if node has a pill in it. 
-				if(game.isPillStillAvailable(temp) == true){
-					tempScore = tempScore + 10;
-				}
-				
-				//Checks if there is a powerpill in the node.
-				//Would like to add clause that it doesn't go for
-				//powerpill if ghosts are still edible.
-				if(game.isPowerPillStillAvailable(temp) == true){
-					tempScore = tempScore + 50;
-				}
-				
-				if(tempScore > projectedScore){
-					projectedScore = tempScore;
-					currentBest = temp;
-				}
-				
+			if(sectionScore > bestS){
+				bestS = sectionScore;
+				bestJ = junc;
 			}
-			
-			bestScore = projectedScore;
-			System.out.println("Best node: " + currentBest);
-			System.out.println("Best score: " + bestScore);
-			
-			//get the possible moves from the best node.
-			posMoves = game.getPossibleMoves(currentBest);
-			
-		}
-		//Make the next move to be towards the best found node
-		//Or away from the closest ghost.
-		if(tooClose == true){
-			myMove = game.getNextMoveAwayFromTarget(currentNode, game.getGhostCurrentNodeIndex(closestG), DM.PATH);
-		}
-		else{
-			myMove = game.getNextMoveTowardsTarget(currentNode, currentBest, lastMove, DM.PATH);
+			sectionScore = 0;
 		}
 		
+		myMove = game.getNextMoveTowardsTarget(curNode, bestJ, lastMove, DM.PATH);
+		
+/*				//Determines how close the ghosts are to the node being evaluated.
+				for(int j = 0; j < ghosts.length; j++){
+					int gNode = game.getGhostCurrentNodeIndex(ghosts[j]);
+					int dist = game.getManhattanDistance(temp, gNode);
+					
+					if(dist < 5 && game.isGhostEdible(ghosts[j]) == false){
+						ghostAlert = true;
+						currentBest = gNode;
+					} */
 		return myMove;
 	}
 
+	/**
+	 * Keeps searching along a path until it finds a junction or corner.
+	 * Every node passed through on route is scored and the final score is stored
+	 * for evaluation purposes. 
+	 * @param game - A copy of the game state
+	 * @param startNode - The node to begin searching from
+	 * @param last - The last move made (Gives direction in which to search)
+	 * @returns - The index of the next junction or corner.
+	 */
+	public int findNextJunction(Game game, int startNode, MOVE last){
+		int score = 0;
+		int junction = 0;
+		int nextNode = startNode;
+		boolean atJunction = false;
+			while(!atJunction){
+				
+				//Score the node
+				score = score + getNodeScore(game, nextNode);
+				
+				//Check if node is a junction
+				if(game.isJunction(nextNode)){
+					atJunction = true;
+				}
+				//Check if corner
+				else if(game.getNeighbour(nextNode, last) == -1){
+					atJunction = true;
+				}
+				//Still in corridor get next node
+				else{
+					nextNode = game.getNeighbour(nextNode, last);
+				}
+			}
+		
+		junction = nextNode;
+		sectionScore = score;
+		return junction;
+}
+	/**
+	 * Gets the score for the give node. Score is based on 
+	 * point value of any pills at that node
+	 * @param game - copy of the game state
+	 * @param node - The node to be scored.
+	 * @returns a score for the node.
+	 */
+	public int getNodeScore(Game game, int node){
+		int nScore = 0;
+		int pill = game.getPillIndex(node);
+		int pPill = game.getPowerPillIndex(node);
+		
+		//Is there a normal pill at this node?
+		if(pill != -1){
+			if(game.isPillStillAvailable(pill)){
+				nScore = 10;
+			}
+		}
+		
+		//Is there a powerPill at this node?
+		else if(pPill != -1){
+			if (game.isPowerPillStillAvailable(pPill)){
+				nScore = 50;
+			}
+		}
+		
+		return nScore;
+	}
 	
 } 
