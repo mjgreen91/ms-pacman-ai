@@ -33,7 +33,7 @@ public class MyPacMan extends Controller<MOVE>
 		int curNode = game.getPacmanCurrentNodeIndex();
 		int bestJ = 0;
 		int bestS = 0;
-		MOVE[] moves = game.getPossibleMoves(curNode, lastMove);
+		MOVE[] moves = game.getPossibleMoves(curNode);
 		GHOST[] ghosts = new GHOST[4];
 			ghosts[0] = GHOST.BLINKY;
 			ghosts[1] = GHOST.PINKY;
@@ -42,17 +42,20 @@ public class MyPacMan extends Controller<MOVE>
 		boolean ghostAlert = false;
 		boolean atJunction = false;
 		
+		System.out.println("Pos moves: " + moves.length);
 		for(int i = 0; i < moves.length ;i ++){
 			int searchNode = game.getNeighbour(curNode, moves[i]);
 			int junc = findNextJunction(game, searchNode, lastMove);
-			
+			System.out.println("i = " + i);
+			System.out.println("score: " + sectionScore + " Junction: " + junc);
 			if(sectionScore > bestS){
 				bestS = sectionScore;
 				bestJ = junc;
 			}
 			sectionScore = 0;
 		}
-		
+		System.out.println("Moving to: " + bestJ + " Score: " + bestS);
+		System.out.println();
 		myMove = game.getNextMoveTowardsTarget(curNode, bestJ, lastMove, DM.PATH);
 		
 /*				//Determines how close the ghosts are to the node being evaluated.
@@ -81,21 +84,28 @@ public class MyPacMan extends Controller<MOVE>
 		int junction = 0;
 		int nextNode = startNode;
 		boolean atJunction = false;
+		int steps = 0;
 			while(!atJunction){
 				
-				//Score the node
-				score = score + getNodeScore(game, nextNode);
-				
+				steps++;
+								
 				//Check if node is a junction
-				if(game.isJunction(nextNode)){
+				if(game.isJunction(nextNode) && steps != 0){
+					System.out.println("At junction");
+					System.out.println(steps);
+					score = score + getNodeScore(game, nextNode);
 					atJunction = true;
 				}
 				//Check if corner
-				else if(game.getNeighbour(nextNode, last) == -1){
+				else if(game.getNeighbour(nextNode, last) == -1 && steps != 0){
+					System.out.println("At Corner");
+					System.out.println(steps);
+					score = score + getNodeScore(game, nextNode);
 					atJunction = true;
 				}
 				//Still in corridor get next node
 				else{
+					score = score + getNodeScore(game, nextNode);
 					nextNode = game.getNeighbour(nextNode, last);
 				}
 			}
