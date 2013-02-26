@@ -15,9 +15,11 @@ import pacman.game.Game;
  */
 public class MyPacMan extends Controller<MOVE>
 {
+	private boolean nomTime = false;
 	private MOVE myMove=MOVE.NEUTRAL;
 	private int sectionScore = 0;
 	private int bestJ = 0;
+	private int gNode = 0;
 	
 	public MOVE getMove(Game game, long timeDue) 
 	{
@@ -29,17 +31,15 @@ public class MyPacMan extends Controller<MOVE>
 		 * Find the neighbours for that node.
 		 * Rinse repeat until time runs out or best node found
 		 */
-		
 		MOVE lastMove = game.getPacmanLastMoveMade();
 		int curNode = game.getPacmanCurrentNodeIndex();
 		int bestS = 0;
-		int closeG = 0;
 		MOVE[] moves = game.getPossibleMoves(curNode);
-		boolean ghostAlert = false;
-
-		//int[]ghostDs = getGhostDistances(game, curNode);
+		boolean ghostAlert;
 		
-	//	if(ghostAlert == false){
+		ghostAlert = isGhostTooClose(game, curNode);
+		
+		if(ghostAlert == false){
 			System.out.println("Pos moves: " + moves.length);
 			for(int i = 0; i < moves.length ;i ++){
 				int searchNode = game.getNeighbour(curNode, moves[i]);
@@ -51,6 +51,7 @@ public class MyPacMan extends Controller<MOVE>
 				if(sectionScore > bestS){
 					bestS = sectionScore;
 					bestJ = junc;
+					
 				}
 
 				else if(sectionScore == 0 && i == moves.length){
@@ -63,13 +64,14 @@ public class MyPacMan extends Controller<MOVE>
 				System.out.println();
 				myMove = game.getNextMoveTowardsTarget(curNode, bestJ, lastMove, DM.PATH);
 			}
-	//	}
+		}
 		
-/*		//Ghost is too close: RUN AWAY!
+		//Ghost is too close: RUN AWAY!
 		else if(ghostAlert == true){
 			System.out.println("Running Away");
-			myMove = game.getNextMoveAwayFromTarget(curNode, closeG, DM.PATH);
-		}*/
+			myMove = game.getNextMoveAwayFromTarget(curNode, gNode, DM.PATH);
+			ghostAlert = isGhostTooClose(game, game.getNeighbour(curNode, myMove));
+		}
 		
 		return myMove;
 	}
@@ -96,7 +98,6 @@ public class MyPacMan extends Controller<MOVE>
 				//Check if node is a junction
 				if(game.getPossibleMoves(nextNode).length > 2 && steps != 0){
 					System.out.println("At junction: " + nextNode);
-					System.out.println(steps);
 					score = score + getNodeScore(game, nextNode);
 					System.out.println("Score this path: " + score);
 					System.out.println();
@@ -134,6 +135,11 @@ public class MyPacMan extends Controller<MOVE>
 		int pill = game.getPillIndex(node);
 		int pPill = game.getPowerPillIndex(node);
 		
+		//Is there an edible ghost in this node;
+		if(nomTime && node == gNode){
+			nScore = nScore + game.getGhostCurrentEdibleScore();
+		}
+		
 		//Is there a normal pill at this node?
 		if(pill != -1){
 			if(game.isPillStillAvailable(pill)){
@@ -142,7 +148,7 @@ public class MyPacMan extends Controller<MOVE>
 		}
 		
 		//Is there a powerPill at this node?
-		else if(pPill != -1){
+		if(pPill != -1){
 			if (game.isPowerPillStillAvailable(pPill)){
 				nScore = 50;
 			}
@@ -152,21 +158,46 @@ public class MyPacMan extends Controller<MOVE>
 		return nScore;
 	}
 	
-	public int[] getGhostDistances(Game game, int pacNode){
-		int[] ghostDists = new int[4];
+	/**
+	 * This method find the current positions of each ghosts and finds
+	 * the distance between them and Ms. Pac-man.
+	 * If a ghost is deemed too close it checks whether that ghost is edible or not.
+	 * If edible a flag is raised for the scoring method.
+	 * @param game - A copy of the game state.
+	 * @param pacNode - Ms. Pac-mans current position
+	 * @returns - True if an inedible ghost is within minimum distance
+	 *  or false if the ghost is edible.
+	 */
+	public boolean isGhostTooClose(Game game, int pacNode){
+		int[] ghostNs = new int[4];
 		GHOST[] ghosts = new GHOST[4];
 		ghosts[0] = GHOST.BLINKY;
 		ghosts[1] = GHOST.PINKY;
 		ghosts[2] = GHOST.INKY;
 		ghosts[3] = GHOST.SUE;
 		
+		//Gets the current nodes of all the ghosts 
 		for(int i = 0; i < ghosts.length; i++){
-			int gNode = game.getGhostCurrentNodeIndex(ghosts[i]);
-			ghostDists[i] = game.getShortestPathDistance(pacNode, gNode);	
+			ghostNs[i] = game.getGhostCurrentNodeIndex(ghosts[i]);
+			int dist = game.getShortestPathDistance(pacNode, ghostNs[i]);
+			
+			//Is a ghost too close.
+			if(dist <= 7){
+				gNode = ghostNs[i];
+				
+				//Is said ghost edible or not?
+				if(game.isGhostEdible(ghosts[i])){
+					nomTime = true;
+					return false;
+				}
+				else{
+					nomTime = false;
+					return true;
+				}
+			}
 		}
-
 		
-		return ghostDists;
+		return false;
 	}
 	
 } 
