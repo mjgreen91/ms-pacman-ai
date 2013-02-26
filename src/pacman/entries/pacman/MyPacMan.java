@@ -17,6 +17,7 @@ public class MyPacMan extends Controller<MOVE>
 {
 	private MOVE myMove=MOVE.NEUTRAL;
 	private int sectionScore = 0;
+	private int bestJ = 0;
 	
 	public MOVE getMove(Game game, long timeDue) 
 	{
@@ -31,42 +32,45 @@ public class MyPacMan extends Controller<MOVE>
 		
 		MOVE lastMove = game.getPacmanLastMoveMade();
 		int curNode = game.getPacmanCurrentNodeIndex();
-		int bestJ = 0;
 		int bestS = 0;
+		int closeG = 0;
 		MOVE[] moves = game.getPossibleMoves(curNode);
-		GHOST[] ghosts = new GHOST[4];
-			ghosts[0] = GHOST.BLINKY;
-			ghosts[1] = GHOST.PINKY;
-			ghosts[2] = GHOST.INKY;
-			ghosts[3] = GHOST.SUE;
 		boolean ghostAlert = false;
-		boolean atJunction = false;
+
+		//int[]ghostDs = getGhostDistances(game, curNode);
 		
-		System.out.println("Pos moves: " + moves.length);
-		for(int i = 0; i < moves.length ;i ++){
-			int searchNode = game.getNeighbour(curNode, moves[i]);
-			int junc = findNextJunction(game, searchNode, lastMove);
-			System.out.println("i = " + i);
-			System.out.println("score: " + sectionScore + " Junction: " + junc);
-			if(sectionScore > bestS){
-				bestS = sectionScore;
-				bestJ = junc;
+	//	if(ghostAlert == false){
+			System.out.println("Pos moves: " + moves.length);
+			for(int i = 0; i < moves.length ;i ++){
+				int searchNode = game.getNeighbour(curNode, moves[i]);
+				int junc = findNextJunction(game, searchNode, moves[i]);
+
+				System.out.println("i = " + i);
+				System.out.println("score: " + sectionScore + " Junction: " + junc);
+
+				if(sectionScore > bestS){
+					bestS = sectionScore;
+					bestJ = junc;
+				}
+
+				else if(sectionScore == 0 && i == moves.length){
+					System.out.println("Finding nearest pill");
+					bestJ = game.getClosestNodeIndexFromNodeIndex(curNode, game.getActivePillsIndices(), DM.PATH);
+				}
+				sectionScore = 0;
+
+				System.out.println("Moving to: " + bestJ + " Score: " + bestS);
+				System.out.println();
+				myMove = game.getNextMoveTowardsTarget(curNode, bestJ, lastMove, DM.PATH);
 			}
-			sectionScore = 0;
-		}
-		System.out.println("Moving to: " + bestJ + " Score: " + bestS);
-		System.out.println();
-		myMove = game.getNextMoveTowardsTarget(curNode, bestJ, lastMove, DM.PATH);
+	//	}
 		
-/*				//Determines how close the ghosts are to the node being evaluated.
-				for(int j = 0; j < ghosts.length; j++){
-					int gNode = game.getGhostCurrentNodeIndex(ghosts[j]);
-					int dist = game.getManhattanDistance(temp, gNode);
-					
-					if(dist < 5 && game.isGhostEdible(ghosts[j]) == false){
-						ghostAlert = true;
-						currentBest = gNode;
-					} */
+/*		//Ghost is too close: RUN AWAY!
+		else if(ghostAlert == true){
+			System.out.println("Running Away");
+			myMove = game.getNextMoveAwayFromTarget(curNode, closeG, DM.PATH);
+		}*/
+		
 		return myMove;
 	}
 
@@ -79,7 +83,7 @@ public class MyPacMan extends Controller<MOVE>
 	 * @param last - The last move made (Gives direction in which to search)
 	 * @returns - The index of the next junction or corner.
 	 */
-	public int findNextJunction(Game game, int startNode, MOVE last){
+	public int findNextJunction(Game game, int startNode, MOVE direc){
 		int score = 0;
 		int junction = 0;
 		int nextNode = startNode;
@@ -90,23 +94,27 @@ public class MyPacMan extends Controller<MOVE>
 				steps++;
 								
 				//Check if node is a junction
-				if(game.isJunction(nextNode) && steps != 0){
-					System.out.println("At junction");
+				if(game.getPossibleMoves(nextNode).length > 2 && steps != 0){
+					System.out.println("At junction: " + nextNode);
 					System.out.println(steps);
 					score = score + getNodeScore(game, nextNode);
+					System.out.println("Score this path: " + score);
+					System.out.println();
 					atJunction = true;
 				}
 				//Check if corner
-				else if(game.getNeighbour(nextNode, last) == -1 && steps != 0){
-					System.out.println("At Corner");
+				else if(game.getNeighbour(nextNode, direc) == -1 && steps != 0){
+					System.out.println("At Corner: " + nextNode);
 					System.out.println(steps);
 					score = score + getNodeScore(game, nextNode);
+					System.out.println("Score this path: " + score);
+					System.out.println();
 					atJunction = true;
 				}
 				//Still in corridor get next node
 				else{
 					score = score + getNodeScore(game, nextNode);
-					nextNode = game.getNeighbour(nextNode, last);
+					nextNode = game.getNeighbour(nextNode, direc);
 				}
 			}
 		
@@ -140,7 +148,25 @@ public class MyPacMan extends Controller<MOVE>
 			}
 		}
 		
+		System.out.println(pill + " " + pPill);
 		return nScore;
+	}
+	
+	public int[] getGhostDistances(Game game, int pacNode){
+		int[] ghostDists = new int[4];
+		GHOST[] ghosts = new GHOST[4];
+		ghosts[0] = GHOST.BLINKY;
+		ghosts[1] = GHOST.PINKY;
+		ghosts[2] = GHOST.INKY;
+		ghosts[3] = GHOST.SUE;
+		
+		for(int i = 0; i < ghosts.length; i++){
+			int gNode = game.getGhostCurrentNodeIndex(ghosts[i]);
+			ghostDists[i] = game.getShortestPathDistance(pacNode, gNode);	
+		}
+
+		
+		return ghostDists;
 	}
 	
 } 
