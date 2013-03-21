@@ -160,7 +160,8 @@ public final class GameView extends JComponent
     /* (non-Javadoc)
      * @see javax.swing.JComponent#paintComponent(java.awt.Graphics)
      */
-    public void paintComponent(Graphics g) 
+    @Override
+	public void paintComponent(Graphics g) 
     {
     	time=game.getTotalTime();
     	
@@ -308,7 +309,8 @@ public final class GameView extends JComponent
     /* (non-Javadoc)
      * @see javax.swing.JComponent#getPreferredSize()
      */
-    public Dimension getPreferredSize()
+    @Override
+	public Dimension getPreferredSize()
     {
         return new Dimension(GV_WIDTH*MAG,GV_HEIGHT*MAG+20);
     }

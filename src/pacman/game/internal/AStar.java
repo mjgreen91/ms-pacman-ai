@@ -164,11 +164,13 @@ class N implements Comparable<N>
         return index == another.index;
     }
 
-    public String toString()
+    @Override
+	public String toString()
     {
         return ""+index;
     }
 
+	@Override
 	public int compareTo(N another)
 	{
       if ((g + h) < (another.g + another.h))

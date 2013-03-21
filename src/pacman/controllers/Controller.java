@@ -76,6 +76,7 @@ public abstract class Controller<T> implements Runnable
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
+	@Override
 	public final void run()
 	{
 		while(alive)
@@ -98,6 +99,7 @@ public abstract class Controller<T> implements Runnable
 				{
 					new Thread()
 					{
+						@Override
 						public void run()
 						{
 							threadStillRunning=true;

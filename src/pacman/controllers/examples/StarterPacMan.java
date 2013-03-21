@@ -20,6 +20,7 @@ public class StarterPacMan extends Controller<MOVE>
 {	
 	private static final int MIN_DISTANCE=20;	//if a ghost is this close, run away
 	
+	@Override
 	public MOVE getMove(Game game,long timeDue)
 	{			
 		int current=game.getPacmanCurrentNodeIndex();

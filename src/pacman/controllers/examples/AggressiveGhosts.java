@@ -22,6 +22,7 @@ public final class AggressiveGhosts extends Controller<EnumMap<GHOST,MOVE>>
 	/* (non-Javadoc)
 	 * @see pacman.controllers.Controller#getMove(pacman.game.Game, long)
 	 */
+	@Override
 	public EnumMap<GHOST,MOVE> getMove(Game game,long timeDue)
 	{		
 		myMoves.clear();

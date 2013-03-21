@@ -24,6 +24,7 @@ public final class StarterGhosts extends Controller<EnumMap<GHOST,MOVE>>
 	Random rnd=new Random();
 	EnumMap<GHOST,MOVE> myMoves=new EnumMap<GHOST,MOVE>(GHOST.class);
 	
+	@Override
 	public EnumMap<GHOST,MOVE> getMove(Game game,long timeDue)
 	{
 		for(GHOST ghost : GHOST.values())	//for each ghost

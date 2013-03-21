@@ -18,11 +18,16 @@ public final class Constants
 	 */
 	public enum MOVE 
 	{
-		UP 		{ public MOVE opposite(){return MOVE.DOWN;		};},	
-		RIGHT 	{ public MOVE opposite(){return MOVE.LEFT;		};}, 	
-		DOWN 	{ public MOVE opposite(){return MOVE.UP;		};},		
-		LEFT 	{ public MOVE opposite(){return MOVE.RIGHT;		};}, 	
-		NEUTRAL	{ public MOVE opposite(){return MOVE.NEUTRAL;	};};	
+		UP 		{ @Override
+		public MOVE opposite(){return MOVE.DOWN;		};},	
+		RIGHT 	{ @Override
+		public MOVE opposite(){return MOVE.LEFT;		};}, 	
+		DOWN 	{ @Override
+		public MOVE opposite(){return MOVE.UP;		};},		
+		LEFT 	{ @Override
+		public MOVE opposite(){return MOVE.RIGHT;		};}, 	
+		NEUTRAL	{ @Override
+		public MOVE opposite(){return MOVE.NEUTRAL;	};};	
 		
 		public abstract MOVE opposite();
 	};

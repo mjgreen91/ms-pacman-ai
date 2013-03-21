@@ -21,7 +21,8 @@ public class HumanController extends Controller<MOVE>
     	return input;
     }
 
-    public MOVE getMove(Game game,long dueTime)
+    @Override
+	public MOVE getMove(Game game,long dueTime)
     {
     	switch(input.getKey())
     	{

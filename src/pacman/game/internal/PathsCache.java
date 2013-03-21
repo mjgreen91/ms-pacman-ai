@@ -317,6 +317,7 @@ class JunctionData
 		return reversePath;
 	}
 
+	@Override
 	public String toString() 
 	{
 		return nodeID + "\t" + firstMove.toString() + "\t" + Arrays.toString(path);
@@ -383,6 +384,7 @@ class DNode
 		closestJunctions.add(new JunctionData(junctionID, firstMove, nodeStartedFrom,path, lastMove));
 	}
 
+	@Override
 	public String toString() 
 	{
 		return "" + nodeID + "\t" + isJunction;
@@ -445,6 +447,7 @@ class Junction
 		paths[toJunction].put(firstMoveMade, path);
 	}
 
+	@Override
 	public String toString() 
 	{
 		return jctId + "\t" + nodeId;

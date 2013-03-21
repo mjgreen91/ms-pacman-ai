@@ -14,6 +14,7 @@ public class NearestPillPacMan extends Controller<MOVE>
 	/* (non-Javadoc)
 	 * @see pacman.controllers.Controller#getMove(pacman.game.Game, long)
 	 */
+	@Override
 	public MOVE getMove(Game game,long timeDue)
 	{		
 		int currentNodeIndex=game.getPacmanCurrentNodeIndex();

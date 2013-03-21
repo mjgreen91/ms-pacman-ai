@@ -31,7 +31,8 @@ public class Legacy2TheReckoning extends Controller<EnumMap<GHOST,MOVE>>
     /* (non-Javadoc)
      * @see pacman.controllers.Controller#getMove(pacman.game.Game, long)
      */
-    public EnumMap<GHOST,MOVE> getMove(Game game,long timeDue)
+    @Override
+	public EnumMap<GHOST,MOVE> getMove(Game game,long timeDue)
     {
 		int pacmanIndex=game.getPacmanCurrentNodeIndex();
     	
