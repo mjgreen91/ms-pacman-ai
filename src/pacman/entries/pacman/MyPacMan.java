@@ -7,149 +7,100 @@ import pacman.game.Constants.MOVE;
 import pacman.game.Game;
 
 /*
- * This is the class you need to modify for your entry. In particular, you need to
- * fill in the getAction() method. Any additional classes you write should either
- * be placed in this package or sub-packages (e.g., game.entries.pacman.mypackage).
+ * This agent heads towards the nearest pill it can find regardless of whether it is
+ * a normal pill or a power pill. If a power pill is picked up it will actively hunt
+ * the ghosts. If ghosts start getting too close it will try to find a power pill or
+ * try to escape the ghost depending on how close it is. 
  */
 public class MyPacMan extends Controller<MOVE>
 {
 	private MOVE myMove=MOVE.NEUTRAL;
+	private int PERIMETER = 15;
 	private int gNode = 0;
+	private boolean nom = false;
+	private int[] ghostNs = new int[4];
 	
-	@Override
 	public MOVE getMove(Game game, long timeDue) 
 	{
-		
-		
 		MOVE lastMove = game.getPacmanLastMoveMade();
 		int curNode = game.getPacmanCurrentNodeIndex();
-		int bestS = 0;
-		int bestN = 0;
-		MOVE[] moves = game.getPossibleMoves(curNode);
 		boolean ghostAlert;
 		
 		ghostAlert = isGhostTooClose(game, curNode);
 		
-		if(ghostAlert == false){
-		//	System.out.println("Pos moves: " + moves.length);
+		//Hunt mode
+		if(nom == true){
+			//System.out.println("Chasing");
+			myMove = game.getNextMoveTowardsTarget(curNode, gNode, DM.PATH);
+			ghostAlert = isGhostTooClose(game, curNode);
+		}
+				
+		//Nearest Pill mode
+		if(ghostAlert == false && nom == false){
+			//System.out.println("Moving to nearest pill.");
+			int[] pills = game.getActivePillsIndices();
+			myMove = game.getNextMoveTowardsTarget(curNode, game.getClosestNodeIndexFromNodeIndex(curNode,pills,DM.PATH), DM.PATH);
+		}
 
-			//For every possible move
-			for(int i = 0; i < moves.length ; i ++){
-				int neigh = curNode;
-				int score = 0;
-				//Get the total score for the next 3 nodes in this direction.
-				for(int j=0; j < 3; j++){
-					score = score + getNodeScore(game, neigh);
-					neigh = game.getNeighbour(neigh, moves[i]);
-					if(neigh == -1){
-						break;
-					}
-				}
-			//	System.out.println("Searched 5 neighbours");
-				if(score > bestS && neigh != -1){
-					bestS = score;
-					bestN = neigh;					
-				}
-					
-			}
-
-			if(bestS == 0){
-		//			System.out.println("Finding nearest pill");
-					bestN = game.getClosestNodeIndexFromNodeIndex(curNode, game.getActivePillsIndices(), DM.PATH);
-				}
-				bestS = 0;
-
-			//	System.out.println("Moving to: " + bestN + " Score: " + bestS);
-			//	System.out.println();
-				myMove = game.getNextMoveTowardsTarget(curNode, bestN, lastMove, DM.PATH);
-			}
 		
-		//Ghost is too close: RUN AWAY!
+		//Escape mode
 		else if(ghostAlert == true){
-		//	System.out.println("Running Away");
-			myMove = game.getNextMoveAwayFromTarget(curNode, gNode, DM.PATH);
-			ghostAlert = isGhostTooClose(game, game.getNeighbour(curNode, myMove));
+			
+			//Ghost is about to catch us, move away!
+			if(game.getDistance(curNode, gNode, DM.PATH) < 10){
+				//System.out.println("RUNNING AWAY!!");
+				myMove = game.getNextMoveAwayFromTarget(curNode, gNode, DM.PATH);
+			}
+			//Find a pill and turn the tables!
+			else{
+				//System.out.println("MOAR POWER!");
+				myMove = game.getNextMoveTowardsTarget(curNode, game.getClosestNodeIndexFromNodeIndex(curNode, game.getActivePowerPillsIndices(), DM.PATH), DM.PATH);
+			}
 		}
 		
 		return myMove;
 	}
+
 	
-	/**
-	 * Gets the score for the give node. Score is based on 
-	 * point value of any pills at that node
-	 * @param game - copy of the game state
-	 * @param node - The node to be scored.
-	 * @returns a score for the node.
-	 */
-	public int getNodeScore(Game game, int node){
-		int nScore = 0;
-		int pill = game.getPillIndex(node);
-		int pPill = game.getPowerPillIndex(node);
-		
-		/*//Is there an edible ghost in this node;
-		if(nomTime && node == gNode){
-			nScore = nScore + game.getGhostCurrentEdibleScore();
-		}*/
-		
-		//Is there a normal pill at this node?
-		if(pill != -1){
-			if(game.isPillStillAvailable(pill)){
-				nScore = 10;
-			}
-		}
-		
-		//Is there a powerPill at this node?
-		if(pPill != -1){
-			if (game.isPowerPillStillAvailable(pPill)){
-				nScore = 50;
-			}
-		}
-		
-	//	System.out.println(pill + " " + pPill);
-		return nScore;
-	}
 	
-	/**
-	 * This method find the current positions of each ghosts and finds
-	 * the distance between them and Ms. Pac-man.
-	 * If a ghost is deemed too close it checks whether that ghost is edible or not.
-	 * If edible a flag is raised for the scoring method.
-	 * @param game - A copy of the game state.
-	 * @param pacNode - Ms. Pac-mans current position
-	 * @returns - True if an inedible ghost is within minimum distance
-	 *  or false if the ghost is edible.
-	 */
+/**
+ * This method gets the distance from Ms Pac-Man to
+ * each of the ghosts. Each ghost is checked to see first if it is
+ * edible and if not then has it crossed over the perimeter boundary. 
+ * @param game - A copy of the game state.
+ * @param pacNode - Ms Pac-Mans current node.
+ * @returns true if a non-edible ghost has broken the perimeter
+ * and false otherwise
+ */
 	public boolean isGhostTooClose(Game game, int pacNode){
-		int[] ghostNs = new int[4];
-		GHOST[] ghosts = new GHOST[4];
-		ghosts[0] = GHOST.BLINKY;
-		ghosts[1] = GHOST.PINKY;
-		ghosts[2] = GHOST.INKY;
-		ghosts[3] = GHOST.SUE;
 		
-		//Gets the current nodes of all the ghosts 
-		for(int i = 0; i < ghosts.length; i++){
-			ghostNs[i] = game.getGhostCurrentNodeIndex(ghosts[i]);
-			int dist = game.getShortestPathDistance(pacNode, ghostNs[i]);
+		boolean run = false;
+		int i = 0;
+		
+		for(GHOST ghost : GHOST.values()){
+			//Add the ghosts current position to the array
+			ghostNs[i] = game.getGhostCurrentNodeIndex(ghost);
+			//Get the distance between Ms Pac-Man and the ghost.
+			double dist = game.getDistance(pacNode, ghostNs[i], DM.PATH);
+			i++;
 			
-			//Is a ghost too close.
-			if(dist <= 7){
-				gNode = ghostNs[i];
-				
-				//Is said ghost edible or not?
-				if(game.isGhostEdible(ghosts[i])){
-					return false;
-				}
-				else if(game.getGhostLairTime(ghosts[i]) > 0){
-					return false;
-				}
-				else{
-					return true;
+			//Is the ghost edible?
+			if(game.isGhostEdible(ghost)){
+				gNode = game.getGhostCurrentNodeIndex(ghost);
+				run = false;
+				nom = true;
+			}
+			else if(game.isGhostEdible(ghost) == false){
+				nom = false;
+				//Has the ghost broken the perimeter?
+				if(dist <= PERIMETER && game.getGhostLairTime(ghost) == 0){
+					gNode = game.getGhostCurrentNodeIndex(ghost);
+					run = true;
 				}
 			}
 		}
 		
-		return false;
+		return run;
 	}
 	
 } 

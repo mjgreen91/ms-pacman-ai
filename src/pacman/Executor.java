@@ -47,9 +47,9 @@ public class Executor
 		Executor exec=new Executor();
 
 		
-		//run multiple games in batch mode - good for testing.
-		int numTrials=10;
-		exec.runExperiment(new MyPacMan(),new RandomGhosts(),numTrials);
+//		//run multiple games in batch mode - good for testing.
+//		int numTrials=10;
+//		exec.runExperiment(new MyPacMan(),new StarterGhosts(),numTrials);
 		
 		
 		/*
@@ -63,7 +63,7 @@ public class Executor
 		//run the game in asynchronous mode.
 		boolean visual=true;
 //		exec.runGameTimed(new NearestPillPacMan(),new AggressiveGhosts(),visual);
-//		exec.runGameTimed(new MyPacMan(),new StarterGhosts(),visual);
+		exec.runGameTimed(new MyPacMan(),new StarterGhosts(),visual);
 //		exec.runGameTimed(new HumanController(new KeyBoardInput()),new StarterGhosts(),visual);	
 		//*/
 		
@@ -112,10 +112,14 @@ public class Executor
 			}
 			
 			avgScore+=game.getScore();
-			System.out.println(i+"\t"+game.getScore());
+			System.out.println();
+			System.out.println(i+"  score  "+game.getScore());
+			System.out.println(i+"  time  "+game.getTotalTime());
+			System.out.println(i+"  level  "+game.getCurrentLevel());
 		}
 		
 		System.out.println(avgScore/trials);
+		System.out.println();
     }
 	
 	/**
